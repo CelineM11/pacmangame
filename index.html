@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacman Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #111;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        canvas {
+            display: block;
+            margin: 20px auto;
+            background-color: #000;
+            border: 5px solid #fff;
+            box-shadow: 0 0 20px #fff;
+        }
+
+        #gameInfo {
+            font-size: 20px;
+            margin: 10px;
+        }
+
+        button {
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 20px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pacman Game</h1>
+    <div id="gameInfo">
+        <p>Level: <span id="level">1</span> | Lives: <span id="lives">3</span> | Score: <span id="score">0</span></p>
+    </div>
+    <canvas id="gameCanvas" width="600" height="600"></canvas>
+    <button onclick="startGame()">Start Game</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const levelDisplay = document.getElementById('level');
+        const livesDisplay = document.getElementById('lives');
+        const scoreDisplay = document.getElementById('score');
+
+        let level = 1;
+        let lives = 3;
+        let score = 0;
+        let gameInterval;
+
+        const pacman = {
+            x: 300,
+            y: 300,
+            size: 20,
+            dx: 0,
+            dy: 0,
+            speed: 5,
+        };
+
+        const ghosts = [];
+        const pellets = [];
+
+        function createGhosts() {
+            ghosts.length = 0;
+            for (let i = 0; i < level; i++) {
+                const ghost = {
+                    x: Math.random() * (canvas.width - 50) + 25,
+                    y: Math.random() * (canvas.height - 50) + 25,
+                    size: 20,
+                    dx: (Math.random() > 0.5 ? 1 : -1) * 2,
+                    dy: (Math.random() > 0.5 ? 1 : -1) * 2,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                };
+                ghosts.push(ghost);
+            }
+        }
+
+        function createPellets() {
+            pellets.length = 0;
+            for (let i = 0; i < 30 + level * 10; i++) {
+                const pellet = {
+                    x: Math.random() * (canvas.width - 10),
+                    y: Math.random() * (canvas.height - 10),
+                    size: 5,
+                };
+                pellets.push(pellet);
+            }
+        }
+
+        function drawPacman() {
+            ctx.beginPath();
+            ctx.arc(pacman.x, pacman.y, pacman.size, 0.2 * Math.PI, 1.8 * Math.PI);
+            ctx.lineTo(pacman.x, pacman.y);
+            ctx.fillStyle = 'yellow';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawGhosts() {
+            for (const ghost of ghosts) {
+                ctx.beginPath();
+                ctx.arc(ghost.x, ghost.y, ghost.size, 0, 2 * Math.PI);
+                ctx.fillStyle = ghost.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function drawPellets() {
+            ctx.fillStyle = 'white';
+            for (const pellet of pellets) {
+                ctx.beginPath();
+                ctx.arc(pellet.x, pellet.y, pellet.size, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function movePacman() {
+            pacman.x += pacman.dx;
+            pacman.y += pacman.dy;
+
+            if (pacman.x - pacman.size < 0 || pacman.x + pacman.size > canvas.width) {
+                pacman.x -= pacman.dx;
+            }
+            if (pacman.y - pacman.size < 0 || pacman.y + pacman.size > canvas.height) {
+                pacman.y -= pacman.dy;
+            }
+        }
+
+        function moveGhosts() {
+            for (const ghost of ghosts) {
+                ghost.x += ghost.dx;
+                ghost.y += ghost.dy;
+
+                if (ghost.x - ghost.size < 0 || ghost.x + ghost.size > canvas.width) {
+                    ghost.dx *= -1;
+                }
+                if (ghost.y - ghost.size < 0 || ghost.y + ghost.size > canvas.height) {
+                    ghost.dy *= -1;
+                }
+            }
+        }
+
+        function checkCollisions() {
+            pellets.forEach((pellet, index) => {
+                const dist = Math.hypot(pacman.x - pellet.x, pacman.y - pellet.y);
+                if (dist - pacman.size - pellet.size < 1) {
+                    pellets.splice(index, 1);
+                    score += 10;
+                    scoreDisplay.textContent = score;
+                }
+            });
+
+            ghosts.forEach(ghost => {
+                const distToGhost = Math.hypot(pacman.x - ghost.x, pacman.y - ghost.y);
+                if (distToGhost - pacman.size - ghost.size < 1) {
+                    lives--;
+                    livesDisplay.textContent = lives;
+                    resetPositions();
+
+                    if (lives === 0) {
+                        alert('Game Over! Your score: ' + score);
+                        clearInterval(gameInterval);
+                    }
+                }
+            });
+
+            if (pellets.length === 0) {
+                level++;
+                levelDisplay.textContent = level;
+                createPellets();
+                createGhosts();
+            }
+        }
+
+        function resetPositions() {
+            pacman.x = canvas.width / 2;
+            pacman.y = canvas.height / 2;
+            ghosts.forEach(ghost => {
+                ghost.x = Math.random() * (canvas.width - 50) + 25;
+                ghost.y = Math.random() * (canvas.height - 50) + 25;
+            });
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPacman();
+            drawGhosts();
+            drawPellets();
+            movePacman();
+            moveGhosts();
+            checkCollisions();
+        }
+
+        function startGame() {
+            clearInterval(gameInterval);
+            level = 1;
+            lives = 3;
+            score = 0;
+            levelDisplay.textContent = level;
+            livesDisplay.textContent = lives;
+            scoreDisplay.textContent = score;
+            resetPositions();
+            createPellets();
+            createGhosts();
+            gameInterval = setInterval(update, 1000 / 60);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                    pacman.dy = -pacman.speed;
+                    pacman.dx = 0;
+                    break;
+                case 'ArrowDown':
+                    pacman.dy = pacman.speed;
+                    pacman.dx = 0;
+                    break;
+                case 'ArrowLeft':
+                    pacman.dx = -pacman.speed;
+                    pacman.dy = 0;
+                    break;
+                case 'ArrowRight':
+                    pacman.dx = pacman.speed;
+                    pacman.dy = 0;
+                    break;
+            }
+        });
+
+        window.addEventListener('keyup', () => {
+            pacman.dx = 0;
+            pacman.dy = 0;
+        });
+    </script>
+</body>
+</html>
