@@ -42,6 +42,36 @@
         button:hover {
             background-color: #e67e22;
         }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: center;
+            margin: 5px 0;
+        }
+
+        .control-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #3498db;
+        }
+
+        .control-button:active {
+            background-color: #2980b9;
+            box-shadow: 0 0 5px #2980b9;
+        }
     </style>
 </head>
 <body>
@@ -51,6 +81,17 @@
     </div>
     <canvas id="gameCanvas" width="600" height="600"></canvas>
     <button onclick="startGame()">Start Game</button>
+
+    <div id="controls">
+        <div class="control-row">
+            <button class="control-button" id="up">▲</button>
+        </div>
+        <div class="control-row">
+            <button class="control-button" id="left">◀</button>
+            <button class="control-button" id="down">▼</button>
+            <button class="control-button" id="right">▶</button>
+        </div>
+    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -217,21 +258,27 @@
             levelDisplay.textContent = level;
             livesDisplay.textContent = lives;
             scoreDisplay.textContent = score;
-            resetPositions();
+
+            pacman.x = canvas.width / 2;
+            pacman.y = canvas.height / 2;
+            pacman.dx = 0;
+            pacman.dy = 0;
+
             createPellets();
             createGhosts();
+
             gameInterval = setInterval(update, 1000 / 60);
         }
 
-        window.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', (e) => {
             switch (e.key) {
                 case 'ArrowUp':
-                    pacman.dy = -pacman.speed;
                     pacman.dx = 0;
+                    pacman.dy = -pacman.speed;
                     break;
                 case 'ArrowDown':
-                    pacman.dy = pacman.speed;
                     pacman.dx = 0;
+                    pacman.dy = pacman.speed;
                     break;
                 case 'ArrowLeft':
                     pacman.dx = -pacman.speed;
@@ -241,13 +288,33 @@
                     pacman.dx = pacman.speed;
                     pacman.dy = 0;
                     break;
+                    case 'ArrowRight':
+                    pacman.dx = pacman.speed;
+                    pacman.dy = 0;
+                    break;
             }
         });
 
-        window.addEventListener('keyup', () => {
+        document.getElementById('up').addEventListener('click', () => {
             pacman.dx = 0;
+            pacman.dy = -pacman.speed;
+        });
+
+        document.getElementById('down').addEventListener('click', () => {
+            pacman.dx = 0;
+            pacman.dy = pacman.speed;
+        });
+
+        document.getElementById('left').addEventListener('click', () => {
+            pacman.dx = -pacman.speed;
+            pacman.dy = 0;
+        });
+
+        document.getElementById('right').addEventListener('click', () => {
+            pacman.dx = pacman.speed;
             pacman.dy = 0;
         });
     </script>
 </body>
 </html>
+
